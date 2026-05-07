@@ -1,0 +1,15 @@
+# Environment files
+.env
+package-lock.json
+
+# Node modules
+node_modules/
+
+
+# MacOS
+.DS_Store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
