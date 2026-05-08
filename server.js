@@ -19,10 +19,6 @@ const pool = new Pool({
 
 const PORT = process.env.PORT || 3000;
 
-// app.listen(PORT, () => {
-//   console.log(`✅ Backend running on http://localhost:${PORT}`);
-// });
-
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server started on port: ${PORT}`);
 });
@@ -183,7 +179,8 @@ app.post("/add/recipe", async (req, res) => {
 
 // GET ALL SAVED TAGS
 app.get("/tags", async (req, res) => {
-
+  console.log('✅ ###', req.body);
+  console.log('✅ ###', req);
   try {
     const result = await pool.query(
     "SELECT id, name FROM tags ORDER BY id;"
@@ -238,3 +235,6 @@ app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
