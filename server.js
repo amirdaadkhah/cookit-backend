@@ -14,7 +14,8 @@ if (!process.env.DATABASE_URL) {
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  family: 4 // FORCE IPv4
 });
 
 const PORT = process.env.PORT || 3000;
@@ -93,7 +94,7 @@ app.get("/ingredients", async (req, res) => {
 });
 
 app.get('/ping', (req, res) => {
-  console.log('PING HIT');
+  console.log('PING HIT on port:', process.env.DATABASE_URL);
   res.json({ ok: true, source: 'backend server.js' });
 });
 
