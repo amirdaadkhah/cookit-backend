@@ -1,29 +1,33 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
+// const { Pool } = require("pg");
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+// const app = express();
+const app = require('./app');
+
+// app.use(cors());
+// app.use(express.json());
 
 if (!process.env.DATABASE_URL) {
   console.error("❌ DATABASE_URL is missing. Check your .env file.");
   process.exit(1);
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
-  family: 4 // FORCE IPv4
-});
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL,
+//   ssl: { rejectUnauthorized: false },
+//   family: 4 // FORCE IPv4
+// });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 6543;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server started on port: ${PORT}`);
 });
 
+// user mode 
+// user with subscription mode
 app.post('/recipes/search', async (req, res) => {
 
   try {
@@ -85,7 +89,7 @@ app.post('/recipes/search', async (req, res) => {
   }
 });
 
-// TEST endpoint
+// TEST endpoint - temporary
 app.get("/ingredients", async (req, res) => {
   const result = await pool.query(
     "SELECT id, name, category FROM ingredients ORDER BY name"
@@ -100,6 +104,7 @@ app.get('/ping', (req, res) => {
 
 
 // INSERT RECIPE endpoint
+// only admin mode
 app.post("/add/recipe", async (req, res) => {
   const recipe = req.body;
   const client = await pool.connect();
@@ -179,9 +184,8 @@ app.post("/add/recipe", async (req, res) => {
 });
 
 // GET ALL SAVED TAGS
+// public
 app.get("/tags", async (req, res) => {
-  console.log('✅ ###', req.body);
-  console.log('✅ ###', req);
   try {
     const result = await pool.query(
     "SELECT id, name FROM tags ORDER BY id;"
@@ -193,6 +197,7 @@ app.get("/tags", async (req, res) => {
   }
 });
 
+// only admin mode
 app.post("/tags/add", async (req, res) => {
   const { tags } = req.body; // array of string - tags
 
