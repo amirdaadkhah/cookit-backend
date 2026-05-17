@@ -174,7 +174,7 @@ app.post("/add/recipe", async (req, res) => {
 
 // GET ALL SAVED TAGS
 // public
-app.get("/tags", async (req, res) => {
+app.get("/api/tags", async (req, res) => {
   try {
     const result = await db.query(
     "SELECT id, name FROM tags ORDER BY id;"
