@@ -20,7 +20,7 @@ app.use(express.json());
 app.use('/api', publicRoutes);
 app.use('/api/admin', adminRoutes);
 
-// ping (برای Render)
+// ping (for Render)
 app.get('/ping', (req, res) => res.send('OK'));
 
 module.exports = app;

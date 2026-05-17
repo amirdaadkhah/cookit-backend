@@ -1,24 +1,13 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-// const { Pool } = require("pg");
-
-// const app = express();
+const db = require('./config/db')
 const app = require('./app');
-
-// app.use(cors());
-// app.use(express.json());
 
 if (!process.env.DATABASE_URL) {
   console.error("❌ DATABASE_URL is missing. Check your .env file.");
   process.exit(1);
 }
-
-// const pool = new Pool({
-//   connectionString: process.env.DATABASE_URL,
-//   ssl: { rejectUnauthorized: false },
-//   family: 4 // FORCE IPv4
-// });
 
 const PORT = process.env.PORT || 6543;
 
@@ -79,7 +68,7 @@ app.post('/recipes/search', async (req, res) => {
       LIMIT $2
     `;
 
-    const result = await pool.query(query, [ingredientIds, limit]);
+    const result = await db.query(query, [ingredientIds, limit]);
 
     res.json(result.rows);
 
@@ -91,7 +80,7 @@ app.post('/recipes/search', async (req, res) => {
 
 // TEST endpoint - temporary
 app.get("/ingredients", async (req, res) => {
-  const result = await pool.query(
+  const result = await db.query(
     "SELECT id, name, category FROM ingredients ORDER BY name"
   );
   res.json(result.rows);
@@ -107,7 +96,7 @@ app.get('/ping', (req, res) => {
 // only admin mode
 app.post("/add/recipe", async (req, res) => {
   const recipe = req.body;
-  const client = await pool.connect();
+  const client = await db.connect();
 
   try {
     await client.query("BEGIN");
@@ -187,7 +176,7 @@ app.post("/add/recipe", async (req, res) => {
 // public
 app.get("/tags", async (req, res) => {
   try {
-    const result = await pool.query(
+    const result = await db.query(
     "SELECT id, name FROM tags ORDER BY id;"
   );
   res.json(result.rows);
@@ -204,7 +193,7 @@ app.post("/tags/add", async (req, res) => {
   if (!Array.isArray(tags)) {
     return res.status(400).json({ error: "Body must be an array of strings" });
   }
-  const client = await pool.connect();
+  const client = await db.connect();
 
   try {
     await client.query("BEGIN");
