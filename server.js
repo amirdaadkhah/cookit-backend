@@ -187,7 +187,7 @@ app.get("/api/tags", async (req, res) => {
 });
 
 // only admin mode
-app.post("/tags/add", async (req, res) => {
+app.post("/api/tags/add", async (req, res) => {
   const { tags } = req.body; // array of string - tags
 
   if (!Array.isArray(tags)) {
