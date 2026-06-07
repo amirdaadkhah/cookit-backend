@@ -30,7 +30,7 @@ async function getCategoryCode(client, categoryNames) {
   console.log('######### cat name', categoryNames);
   const result = await client.query(
     `SELECT name, code FROM category_codes WHERE name = ANY($1)`,
-    [categoryName]
+    [categoryNames]
   );
 
   if (result.rows.length !== categoryNames.length) { // validate if all categories exist
