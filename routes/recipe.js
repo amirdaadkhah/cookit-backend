@@ -73,7 +73,7 @@ router.post("/", async (req, res) => {
     }
 
     await client.query("COMMIT");
-    res.json({ status: "ok" });
+    res.json({ status: "ok - recipe was saved" });
 
   } catch (err) {
     await client.query("ROLLBACK");

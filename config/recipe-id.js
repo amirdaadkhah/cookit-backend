@@ -13,7 +13,7 @@ async function generateRecipeId(client, category, diet) {
   );
 
   const number = result.rows[0].last_number;
-  const padded = String(number).padStart(5, "0");
+  const padded = String(number).padStart(4, "0");
   const { veganCode, vegetarianCode } = getDietCodes(diet);
 
   return `${prefix}-${veganCode}-${vegetarianCode}-${padded}`;
@@ -22,7 +22,6 @@ async function generateRecipeId(client, category, diet) {
 function getDietCodes(diet) {
   const veganCode = diet.vegan ? "V" : "NV";
   const vegetarianCode = diet.vegetarian ? "VEG" : "NONVEG";
-  console.log('######### diet code: ', { veganCode, vegetarianCode });
   return { veganCode, vegetarianCode };
 }
 
@@ -40,8 +39,6 @@ async function getCategoryCode(client, categoryNames) {
   }
   const map = new Map(result.rows.map(r => [r.name, r.code]));
   const prefix = categoryNames.map(name => map.get(name)).join("");
-    console.log('######### cat result prefix', prefix);
-
   return prefix;
 }
 
