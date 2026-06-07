@@ -1,6 +1,4 @@
 async function generateRecipeId(client, category, diet) {
-    console.log('######### generateRecipeId called...');
-
   const prefix = await getCategoryCode(client, category);
 
   const result = await client.query(
@@ -28,19 +26,23 @@ function getDietCodes(diet) {
   return { veganCode, vegetarianCode };
 }
 
-async function getCategoryCode(client, categoryName) {
-  console.log('######### cat name', categoryName);
+async function getCategoryCode(client, categoryNames) {
+  console.log('######### cat name', categoryNames);
   const result = await client.query(
-    `SELECT code FROM category_codes WHERE name = $1`,
+    `SELECT name, code FROM category_codes WHERE name = ANY($1)`,
     [categoryName]
   );
 
-  if (result.rows.length === 0) {
-    throw new Error(`Unknown category: ${categoryName}`);
+  if (result.rows.length !== categoryNames.length) { // validate if all categories exist
+    const found = result.rows.map(r => r.name);
+    const missing = categoryNames.filter(n => !found.includes(n));
+    throw new Error(`Unknown category -(ies): ${missing.join(", ")}`);
   }
-  console.log('######### cat result', result.rows[0].code);
+  const map = new Map(result.rows.map(r => [r.name, r.code]));
+  const prefix = categoryNames.map(name => map.get(name)).join("");
+    console.log('######### cat result prefix', prefix);
 
-  return result.rows[0].code;
+  return prefix;
 }
 
 module.exports = { generateRecipeId };
