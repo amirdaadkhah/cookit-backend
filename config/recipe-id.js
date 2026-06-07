@@ -1,4 +1,6 @@
 async function generateRecipeId(client, category, diet) {
+    console.log('######### generateRecipeId called...');
+
   const prefix = await getCategoryCode(client, category);
 
   const result = await client.query(
@@ -22,18 +24,21 @@ async function generateRecipeId(client, category, diet) {
 function getDietCodes(diet) {
   const veganCode = diet.vegan ? "V" : "NV";
   const vegetarianCode = diet.vegetarian ? "VEG" : "NONVEG";
+  console.log('######### diet code: ', { veganCode, vegetarianCode });
   return { veganCode, vegetarianCode };
 }
 
 async function getCategoryCode(client, categoryName) {
+  console.log('######### cat name', categoryName);
   const result = await client.query(
-    `SELECT code FROM categories WHERE name = $1`,
+    `SELECT code FROM category_codes WHERE name = $1`,
     [categoryName]
   );
 
   if (result.rows.length === 0) {
     throw new Error(`Unknown category: ${categoryName}`);
   }
+  console.log('######### cat result', result.rows[0].code);
 
   return result.rows[0].code;
 }
