@@ -5,6 +5,7 @@ const db = require('./config/db')
 const app = require('./app');
 
 const recipeRoutes = require("./routes/recipe");
+const tagsRoutes = require("./routes/tags");
 
 if (!process.env.DATABASE_URL) {
   console.error("❌ DATABASE_URL is missing. Check your .env file.");
@@ -27,7 +28,6 @@ app.post('/recipes/search', async (req, res) => {
     if (!Array.isArray(ingredientIds) || ingredientIds.length === 0) {
       return res.status(400).json({ error: 'ingredientIds must be a non-empty array' });
     }
-    console.log('BODY:', req.body);
 
     const query = `
       WITH user_ingredients AS (
@@ -99,56 +99,11 @@ app.use("/api/add/recipe", recipeRoutes);
 
 // GET ALL SAVED TAGS
 // public
-app.get("/api/tags", async (req, res) => {
-  try {
-    const result = await db.query(
-    "SELECT id, name FROM tags ORDER BY id;"
-  );
-  res.json(result.rows);
-  } catch (error) {
-    console.error("Error loading tags: ", error);
-    res.status(500).json({ error: "Failed to load tags" });
-  }
-});
+app.use("/api/tags", tagsRoutes);
 
 // only admin mode
-app.post("/api/tags/add", async (req, res) => {
-  const { tags } = req.body; // array of string - tags
-
-  if (!Array.isArray(tags)) {
-    return res.status(400).json({ error: "Body must be an array of strings" });
-  }
-  const client = await db.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    for(const tag of tags) {
-      if (typeof tag !== "string") continue;
-      const normilizedTag = tag.trim().toLowerCase().replace(/\s+/g, "_");
-      if(!normilizedTag) continue;
-
-      await client.query(
-        `
-        INSERT INTO tags (name)
-        VALUES ($1)
-        ON CONFLICT (name) DO NOTHING
-        `,
-        [normilizedTag]
-      );
-    }
-
-    await client.query("COMMIT");
-    res.json({ status: "ok" });
-
-  } catch (err) {
-    await client.query("ROLLBACK");
-    res.status(500).json({ error: err.message });
-
-  } finally {
-    client.release();
-  }
-});
+// ADD tags to DB
+app.use("/api/tags/add", tagsRoutes);
 
 // health check
 app.get("/health", (req, res) => {

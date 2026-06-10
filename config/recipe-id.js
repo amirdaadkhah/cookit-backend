@@ -26,7 +26,6 @@ function getDietCodes(diet) {
 }
 
 async function getCategoryCode(client, categoryNames) {
-  console.log('######### cat name', categoryNames);
   const result = await client.query(
     `SELECT name, code FROM category_codes WHERE name = ANY($1)`,
     [categoryNames]
