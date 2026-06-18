@@ -96,6 +96,8 @@ app.get('/ping', (req, res) => {
 // Routes 
 // INSERT RECIPE endpoint
 app.use("/api/add/recipe", recipeRoutes);
+// CHECK RECIPE endpoint
+app.use("/api/recipe", recipeRoutes);
 
 // GET ALL SAVED TAGS
 // public

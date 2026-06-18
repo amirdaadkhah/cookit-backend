@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const db = require('../config/db');
 const { generateRecipeId } = require("../config/recipe-id");
+const { isRecipeExists } = require("../config/recipe-existance");
 
 // INSERT RECIPE endpoint
 // only admin mode
@@ -79,6 +80,22 @@ router.post("/", async (req, res) => {
     await client.query("ROLLBACK");
     res.status(500).json({ error: err.message });
 
+  } finally {
+    client.release();
+  }
+});
+
+// CHWCK IF THIS RECIPE_ID EXISTS
+router.post("/exists", async (req, res) => {
+  const { id } = req.body;
+  const client = await db.connect();
+
+  try {
+    const exists = await isRecipeExists(client, id);
+    return res.json(exists);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ exists: false });
   } finally {
     client.release();
   }
