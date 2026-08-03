@@ -18,68 +18,6 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server started on port: ${PORT}`);
 });
 
-// user mode 
-// user with subscription mode
-app.post('/recipes/search', async (req, res) => {
-
-  try {
-    const { ingredientIds, mode, limit } = req.body;
-
-    if (!Array.isArray(ingredientIds) || ingredientIds.length === 0) {
-      return res.status(400).json({ error: 'ingredientIds must be a non-empty array' });
-    }
-
-    const query = `
-      WITH user_ingredients AS (
-        SELECT UNNEST($1::bigint[]) AS ingredient_id
-      ),
-      recipe_stats AS (
-        SELECT
-          r.id AS recipe_id,
-          r.title,
-          r.category,
-
-          COUNT(DISTINCT CASE
-            WHEN ui.ingredient_id IS NOT NULL AND i.is_common = false
-            THEN ri.ingredient_id
-          END) AS match_count,
-
-          COUNT(DISTINCT CASE
-            WHEN ui.ingredient_id IS NOT NULL
-             AND ri.is_main = true
-             AND i.is_common = false
-            THEN ri.ingredient_id
-          END) AS main_match_count,
-
-          COUNT(DISTINCT CASE
-            WHEN ui.ingredient_id IS NULL AND i.is_common = false
-            THEN ri.ingredient_id
-          END) AS missing_count
-
-        FROM recipes r
-        JOIN recipe_ingredients ri ON ri.recipe_id = r.id
-        JOIN ingredients i ON i.id = ri.ingredient_id
-        LEFT JOIN user_ingredients ui ON ui.ingredient_id = ri.ingredient_id
-        GROUP BY r.id, r.title, r.category
-      )
-      SELECT *,
-             (3 * main_match_count) + match_count - (0.5 * missing_count) AS score
-      FROM recipe_stats
-      WHERE match_count > 0
-      ORDER BY score DESC, match_count DESC
-      LIMIT $2
-    `;
-
-    const result = await db.query(query, [ingredientIds, limit]);
-
-    res.json(result.rows);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // TEST endpoint - temporary
 app.get("/ingredients", async (req, res) => {
   const result = await db.query(

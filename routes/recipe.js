@@ -2,6 +2,7 @@ const router = require('express').Router();
 const db = require('../config/db');
 const { generateRecipeId } = require("../config/recipe-id");
 const { isRecipeExists } = require("../config/recipe-existance");
+const { search } = require("../config/search-algorithm");
 
 // INSERT RECIPE endpoint
 // only admin mode
@@ -122,8 +123,7 @@ async function replaceSubRecipes(client, recipeId, subRecipes = []) {
   }
 }
 
-
-// CHWCK IF THIS RECIPE_ID EXISTS
+// CHECK IF THIS RECIPE_ID EXISTS
 router.post("/exists", async (req, res) => {
   const { id } = req.body;
   const client = await db.connect();
@@ -136,6 +136,22 @@ router.post("/exists", async (req, res) => {
     return res.status(500).json({ exists: false });
   } finally {
     client.release();
+  }
+});
+
+// SEARCH FOR MATCHED RECIPES BASED ON ALG
+// user mode 
+// user with subscription mode
+router.post("/search", async (req, res) => {
+  const { ingredientIds, mode, limit } = req.body;
+
+  try {
+    const result = await search(ingredientIds, mode, limit);
+    return res.json(result);
+    
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ exists: false });
   }
 });
 
