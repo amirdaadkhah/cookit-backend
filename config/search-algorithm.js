@@ -24,14 +24,18 @@ async function search(ingredientIds, mode, limit) {
     }
   );
 
+  const responseText = await response.text();
+
   console.log('Search API status:', response.status);
   console.log('Search API response:', responseText);
 
   if (!response.ok) {
-    throw new Error(`Search API failed: ${response.status}`);
+    throw new Error(
+      `Search API failed: ${response.status} - ${responseText}`
+    );
   }
-  const data = await response.json();
-  return data;
+
+  return JSON.parse(responseText);
 };
 
 module.exports = { search };
