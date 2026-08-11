@@ -1,240 +1,55 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const { Pool } = require("pg");
+const db = require('./config/db')
+const app = require('./app');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+const recipeRoutes = require("./routes/recipe");
+const tagsRoutes = require("./routes/tags");
 
 if (!process.env.DATABASE_URL) {
   console.error("❌ DATABASE_URL is missing. Check your .env file.");
   process.exit(1);
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
-
-const PORT = process.env.PORT || 3000;
-
-// app.listen(PORT, () => {
-//   console.log(`✅ Backend running on http://localhost:${PORT}`);
-// });
+const PORT = process.env.PORT || 6543;
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server started on port: ${PORT}`);
 });
 
-app.post('/recipes/search', async (req, res) => {
-
-  try {
-    const { ingredientIds, mode, limit } = req.body;
-
-    if (!Array.isArray(ingredientIds) || ingredientIds.length === 0) {
-      return res.status(400).json({ error: 'ingredientIds must be a non-empty array' });
-    }
-    console.log('BODY:', req.body);
-
-    const query = `
-      WITH user_ingredients AS (
-        SELECT UNNEST($1::bigint[]) AS ingredient_id
-      ),
-      recipe_stats AS (
-        SELECT
-          r.id AS recipe_id,
-          r.title,
-          r.category,
-
-          COUNT(DISTINCT CASE
-            WHEN ui.ingredient_id IS NOT NULL AND i.is_common = false
-            THEN ri.ingredient_id
-          END) AS match_count,
-
-          COUNT(DISTINCT CASE
-            WHEN ui.ingredient_id IS NOT NULL
-             AND ri.is_main = true
-             AND i.is_common = false
-            THEN ri.ingredient_id
-          END) AS main_match_count,
-
-          COUNT(DISTINCT CASE
-            WHEN ui.ingredient_id IS NULL AND i.is_common = false
-            THEN ri.ingredient_id
-          END) AS missing_count
-
-        FROM recipes r
-        JOIN recipe_ingredients ri ON ri.recipe_id = r.id
-        JOIN ingredients i ON i.id = ri.ingredient_id
-        LEFT JOIN user_ingredients ui ON ui.ingredient_id = ri.ingredient_id
-        GROUP BY r.id, r.title, r.category
-      )
-      SELECT *,
-             (3 * main_match_count) + match_count - (0.5 * missing_count) AS score
-      FROM recipe_stats
-      WHERE match_count > 0
-      ORDER BY score DESC, match_count DESC
-      LIMIT $2
-    `;
-
-    const result = await pool.query(query, [ingredientIds, limit]);
-
-    res.json(result.rows);
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// TEST endpoint
+// TEST endpoint - temporary
 app.get("/ingredients", async (req, res) => {
-  const result = await pool.query(
+  const result = await db.query(
     "SELECT id, name, category FROM ingredients ORDER BY name"
   );
   res.json(result.rows);
 });
 
 app.get('/ping', (req, res) => {
-  console.log('PING HIT');
+  console.log('PING HIT on port:', process.env.DATABASE_URL);
   res.json({ ok: true, source: 'backend server.js' });
 });
 
-
+// Routes 
 // INSERT RECIPE endpoint
-app.post("/add/recipe", async (req, res) => {
-  const recipe = req.body;
-  const client = await pool.connect();
-
-  try {
-    await client.query("BEGIN");
-    await client.query(
-      `
-      INSERT INTO recipes (
-        id,title,category,vegan,vegetarian,is_warm,
-        times,nutrition,steps,media,tags,origin,updated_at
-      )
-      VALUES ($1,$2,$3::jsonb,$4,$5,$6,
-      $7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb,$11::jsonb,$12,$13
-      )
-      ON CONFLICT (id) DO UPDATE SET
-        title = EXCLUDED.title,
-        category = EXCLUDED.category,
-        vegan = EXCLUDED.vegan,
-        vegetarian = EXCLUDED.vegetarian,
-        is_warm = EXCLUDED.is_warm,
-        times = EXCLUDED.times,
-        nutrition = EXCLUDED.nutrition,
-        steps = EXCLUDED.steps,
-        media = EXCLUDED.media,
-        tags = EXCLUDED.tags,
-        origin = EXCLUDED.origin,
-        updated_at = EXCLUDED.updated_at
-      `,
-      [
-        recipe.id,
-        recipe.title,
-        JSON.stringify(recipe.category),
-        recipe.diet.vegan,
-        recipe.diet.vegetarian,
-        recipe.isWarm,
-        JSON.stringify(recipe.times),
-        JSON.stringify(recipe.nutrition),
-        JSON.stringify(recipe.steps),
-        JSON.stringify(recipe.media),
-        JSON.stringify(recipe.tags),
-        recipe.origin,
-        recipe.updatedAt
-      ]
-    );
-
-    for (const ing of recipe.ingredients) {
-      await client.query(
-        `
-        INSERT INTO recipe_ingredients
-        (recipe_id,ingredient_id,is_main,optional,qty,unit,note,subtitute)
-        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-        `,
-        [
-          recipe.id,
-          ing.ingredientId,
-          ing.isMain,
-          ing.optional,
-          ing.qty,
-          ing.unit,
-          ing.note,
-          ing.subtitute
-        ]
-      );
-    }
-
-    await client.query("COMMIT");
-    res.json({ status: "ok" });
-
-  } catch (err) {
-    await client.query("ROLLBACK");
-    res.status(500).json({ error: err.message });
-
-  } finally {
-    client.release();
-  }
-});
+app.use("/api/add/recipe", recipeRoutes);
+// CHECK RECIPE endpoint
+app.use("/api/recipe", recipeRoutes);
 
 // GET ALL SAVED TAGS
-app.get("/tags", async (req, res) => {
+// public
+app.use("/api/tags", tagsRoutes);
 
-  try {
-    const result = await pool.query(
-    "SELECT id, name FROM tags ORDER BY id;"
-  );
-  res.json(result.rows);
-  } catch (error) {
-    console.error("Error loading tags: ", error);
-    res.status(500).json({ error: "Failed to load tags" });
-  }
-});
-
-app.post("/tags/add", async (req, res) => {
-  const { tags } = req.body; // array of string - tags
-
-  if (!Array.isArray(tags)) {
-    return res.status(400).json({ error: "Body must be an array of strings" });
-  }
-  const client = await pool.connect();
-
-  try {
-    await client.query("BEGIN");
-
-    for(const tag of tags) {
-      if (typeof tag !== "string") continue;
-      const normilizedTag = tag.trim().toLowerCase().replace(/\s+/g, "_");
-      if(!normilizedTag) continue;
-
-      await client.query(
-        `
-        INSERT INTO tags (name)
-        VALUES ($1)
-        ON CONFLICT (name) DO NOTHING
-        `,
-        [normilizedTag]
-      );
-    }
-
-    await client.query("COMMIT");
-    res.json({ status: "ok" });
-
-  } catch (err) {
-    await client.query("ROLLBACK");
-    res.status(500).json({ error: err.message });
-
-  } finally {
-    client.release();
-  }
-});
+// only admin mode
+// ADD tags to DB
+app.use("/api/tags/add", tagsRoutes);
 
 // health check
 app.get("/health", (req, res) => {
   res.json({ ok: true });
 });
 
+app.get("/", (req, res) => {
+  res.send("Server is running");
+});
