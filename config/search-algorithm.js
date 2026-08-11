@@ -16,7 +16,7 @@ async function search(ingredientIds, mode, limit) {
   const maxAttempts = 3;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      console.log(`Search API attempt ${attempt}`);
+      console.log(`Search API attempt ${attempt}/${maxAttempts}`);
 
       const response = await fetch(
         `${searchUrl}/search`,
@@ -35,8 +35,16 @@ async function search(ingredientIds, mode, limit) {
 
       const responseText = await response.text();
 
-      console.log('Search API status:', response.status);
-      console.log('Search API response:', responseText);
+            console.log(
+        `Search API attempt ${attempt} status:`,
+        response.status
+      );
+
+      console.log(
+        `Search API attempt ${attempt} response:`,
+        responseText
+      );
+
       if (response.ok) {
         return JSON.parse(responseText);
 
@@ -50,12 +58,13 @@ async function search(ingredientIds, mode, limit) {
       );
 
       if (attempt === maxAttempts) {
-        throw error;
-      }
+      throw new Error(
+          `Search API unavailable after ${maxAttempts} attempts. Last error: ${error.message}`
+        );      }
     }
 
     // Give sleeping Render service time to wake up
-    await sleep(5000 * attempt);
+    await sleep(10000 * attempt);
   }
 
   throw new Error('Search API unavailable');
