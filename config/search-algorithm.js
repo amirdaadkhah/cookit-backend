@@ -1,4 +1,3 @@
-
 const sleep = (ms) =>
   new Promise(resolve => setTimeout(resolve, ms));
 
@@ -35,7 +34,7 @@ async function search(ingredientIds, mode, limit) {
 
       const responseText = await response.text();
 
-            console.log(
+      console.log(
         `Search API attempt ${attempt} status:`,
         response.status
       );
@@ -58,9 +57,10 @@ async function search(ingredientIds, mode, limit) {
       );
 
       if (attempt === maxAttempts) {
-      throw new Error(
+        throw new Error(
           `Search API unavailable after ${maxAttempts} attempts. Last error: ${error.message}`
-        );      }
+        );
+      }
     }
 
     // Give sleeping Render service time to wake up

@@ -9,8 +9,6 @@ const { search } = require("../config/search-algorithm");
 router.post("/", async (req, res) => {
   const recipe = req.body;
   const client = await db.connect();
-  console.log('✅ req is: ', req)
-    console.log('✅ res is: ', res)
 
   try {
     await client.query("BEGIN");
@@ -23,8 +21,8 @@ router.post("/", async (req, res) => {
     }
 
     await client.query("COMMIT");
-
     res.json({ status: "ok - recipe was saved" });
+
   } catch (err) {
     await client.query("ROLLBACK");
     res.status(500).json({ error: err.message });
@@ -38,10 +36,10 @@ async function upsertRecipe(client, recipe, recipeId) {
   await client.query(
     `INSERT INTO recipes (
       id,title,category,vegan,vegetarian,is_warm,
-      times,nutrition,steps,media,tags,origin,updated_at
+      times,nutrition,servings,steps,media,tags,origin,updated_at
     )
     VALUES ($1,$2,$3::jsonb,$4,$5,$6,
-    $7::jsonb,$8::jsonb,$9::jsonb,$10::jsonb,$11::jsonb,$12,$13)
+    $7::jsonb,$8,$9::jsonb,$10::jsonb,$11::jsonb,$12::jsonb,$13,$14)
     ON CONFLICT (id) DO UPDATE SET
       title = EXCLUDED.title,
       category = EXCLUDED.category,
@@ -50,6 +48,7 @@ async function upsertRecipe(client, recipe, recipeId) {
       is_warm = EXCLUDED.is_warm,
       times = EXCLUDED.times,
       nutrition = EXCLUDED.nutrition,
+      servings = EXCLUDED.servings,
       steps = EXCLUDED.steps,
       media = EXCLUDED.media,
       tags = EXCLUDED.tags,
@@ -65,6 +64,7 @@ async function upsertRecipe(client, recipe, recipeId) {
       recipe.isWarm,
       JSON.stringify(recipe.times),
       JSON.stringify(recipe.nutrition),
+      recipe.servings,
       JSON.stringify(recipe.steps),
       JSON.stringify(recipe.media),
       JSON.stringify(recipe.tags),
@@ -148,10 +148,52 @@ router.post("/search", async (req, res) => {
   try {
     const result = await search(ingredientIds, mode, limit);
     return res.json(result);
-    
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ exists: false });
+  }
+});
+
+// GET SINGLE RECIPE by RECIPE_ID
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [recipeResult, ingredientsResult] = await Promise.all([
+      db.query(
+        "SELECT * FROM recipes WHERE id = $1;",
+        [id]
+      ),
+
+      db.query(
+        `
+        SELECT
+          recipe_id AS "recipeId",
+          ingredient_id AS "ingredientId",
+          qty,
+          unit
+        FROM recipe_ingredients
+        WHERE recipe_id = $1;
+        `,
+        [id]
+      )
+    ]);
+
+    if (recipeResult.rows.length === 0) {
+      return res.status(404).json({
+        message: 'Recipe not found'
+      });
+    }
+
+    return res.json({
+      ...recipeResult.rows[0],
+      ingredients: ingredientsResult.rows
+    });
+
+  } catch (error) {
+    console.error("Error loading recipe by id: ", id, error);
+    res.status(500).json({ error: "Failed to load recipe" });
   }
 });
 
