@@ -3,7 +3,6 @@ const sleep = (ms) =>
 
 async function wakeSearchApi(searchUrl) {
   const maxAttempts = 3;
-  const searchUrl = process.env.SEARCH_API_URL;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
