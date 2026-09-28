@@ -18,6 +18,48 @@ async function wakeSearchApi(searchUrl) {
         }
       );
 
+
+
+const body = await response.text();
+
+    console.log('-------------------------');
+    console.log('Health URL:', `${searchUrl}/health`);
+    console.log('Status:', response.status);
+    console.log('Body:', body);
+
+    console.log(
+      'server:',
+      response.headers.get('server')
+    );
+
+    console.log(
+      'retry-after:',
+      response.headers.get('retry-after')
+    );
+
+    console.log(
+      'ratelimit-limit:',
+      response.headers.get('ratelimit-limit')
+    );
+
+    console.log(
+      'ratelimit-remaining:',
+      response.headers.get('ratelimit-remaining')
+    );
+
+    console.log(
+      'ratelimit-reset:',
+      response.headers.get('ratelimit-reset')
+    );
+
+    console.log(
+      'cf-ray:',
+      response.headers.get('cf-ray')
+    );
+
+    console.log('-------------------------');
+
+
       console.log(
         `Health check status: ${response.status}`
       );
@@ -35,7 +77,7 @@ async function wakeSearchApi(searchUrl) {
     }
 
     if (attempt < maxAttempts) {
-      await sleep(5000 * attempt);
+      await sleep(10000 * attempt);
     }
   }
 
