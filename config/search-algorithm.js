@@ -1,3 +1,4 @@
+const { wakeSearchApi } = require('./render-health.service');
 const sleep = (ms) =>
   new Promise(resolve => setTimeout(resolve, ms));
 
@@ -11,6 +12,8 @@ async function search(ingredientIds, mode, limit) {
   if (!searchUrl) {
     throw new Error('SEARCH_API_URL environment variable is not defined');
   }
+
+  await wakeSearchApi(searchUrl); // Wake Render first
 
   const maxAttempts = 3;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -64,7 +67,7 @@ async function search(ingredientIds, mode, limit) {
     }
 
     // Give sleeping Render service time to wake up
-    await sleep(10000 * attempt);
+    await sleep(2000 * attempt);
   }
 
   throw new Error('Search API unavailable');
