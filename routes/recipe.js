@@ -2,7 +2,6 @@ const router = require('express').Router();
 const db = require('../config/db');
 const { generateRecipeId } = require("../config/recipe-id");
 const { isRecipeExists } = require("../config/recipe-existance");
-const { search } = require("../config/search-algorithm");
 
 // INSERT RECIPE endpoint
 // only admin mode
@@ -15,7 +14,7 @@ router.post("/", async (req, res) => {
     const recipeId = await generateRecipeId(client, recipe.category, recipe.diet);
     await upsertRecipe(client, recipe, recipeId);
     await replaceIngredients(client, recipeId, recipe.ingredients);
-    //     if (recipe.subRecipes && recipe.subRecipes.length > 0) {
+
     if (recipe.subRecipes?.length) {
       await replaceSubRecipes(client, recipeId, recipe.subRecipes);
     }
