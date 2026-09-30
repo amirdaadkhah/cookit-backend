@@ -15,6 +15,7 @@ async function generateRecipeId(client, category, diet) {
   const number = result.rows[0].last_number;
   const padded = String(number).padStart(4, "0");
   const { veganCode, vegetarianCode } = getDietCodes(diet);
+  console.log('######## generateRecipeId called!', number, padded);
 
   return `${prefix}-${veganCode}-${vegetarianCode}-${padded}`;
 }

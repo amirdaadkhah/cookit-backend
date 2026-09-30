@@ -9,7 +9,7 @@ const { search } = require("../config/search-algorithm");
 router.post("/", async (req, res) => {
   const recipe = req.body;
   const client = await db.connect();
-
+  console.log('######## POST called!');
   try {
     await client.query("BEGIN");
     const recipeId = await generateRecipeId(client, recipe.category, recipe.diet);
@@ -21,6 +21,8 @@ router.post("/", async (req, res) => {
     }
 
     await client.query("COMMIT");
+  console.log('######## POST called, RESPONCE received-------------------!');
+
     res.json({ status: "ok - recipe was saved" });
 
   } catch (err) {
@@ -33,6 +35,8 @@ router.post("/", async (req, res) => {
 })
 
 async function upsertRecipe(client, recipe, recipeId) {
+  console.log('######## upsertRecipe called!');
+
   await client.query(
     `INSERT INTO recipes (
       id,title,category,vegan,vegetarian,is_warm,
@@ -75,6 +79,8 @@ async function upsertRecipe(client, recipe, recipeId) {
 }
 
 async function replaceIngredients(client, recipeId, ingredients = []) {
+  console.log('######## replaceIngredients called!');
+
   await client.query(
     `DELETE FROM recipe_ingredients WHERE recipe_id = $1`,
     [recipeId]
@@ -101,6 +107,8 @@ async function replaceIngredients(client, recipeId, ingredients = []) {
 }
 
 async function replaceSubRecipes(client, recipeId, subRecipes = []) {
+  console.log('######## replaceSubRecipes called!');
+
   await client.query(
     `DELETE FROM sub_recipes WHERE parent_recipe_id = $1`,
     [recipeId]
@@ -136,22 +144,6 @@ router.post("/exists", async (req, res) => {
     return res.status(500).json({ exists: false });
   } finally {
     client.release();
-  }
-});
-
-// SEARCH FOR MATCHED RECIPES BASED ON ALG
-// user mode 
-// user with subscription mode
-router.post("/search", async (req, res) => {
-  const { ingredientIds, mode, limit } = req.body;
-
-  try {
-    const result = await search(ingredientIds, mode, limit);
-    return res.json(result);
-
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ exists: false });
   }
 });
 

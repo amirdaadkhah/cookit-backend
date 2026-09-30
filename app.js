@@ -9,12 +9,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// app.use(cors({
-//   origin: [
-//     'http://localhost:4200',
-//     'https://YOUR-FRONTEND-DOMAIN.com'
-//   ]
-// }));
+app.use(
+  cors({
+    origin: [
+      'http://localhost:4200', 
+      'https://cookit-3f09a.web.app'
+    ],
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type']
+  })
+);
 
 // routes
 app.use('/api', publicRoutes);
