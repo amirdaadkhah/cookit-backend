@@ -26,7 +26,7 @@ router.post("/", async (req, res) => {
 
   } catch (err) {
     await client.query("ROLLBACK");
-    console.log('### upsertRecipe ERROR: ', error);
+    console.log('### upsertRecipe ERROR: ', err);
     res.status(500).json({ error: err.message });
 
   } finally {
