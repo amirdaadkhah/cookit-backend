@@ -46,7 +46,7 @@ router.post("/:id/comments", async (req, res) => {
   } = req.body;
 
   const trimmedComment = comment?.trim();
-  const trimmedUserName = userName?.trim();
+  const trimmedUserName = userName?.trim() ?? 'Gast';
 
   if (!trimmedComment) {
     return res.status(400).json({
