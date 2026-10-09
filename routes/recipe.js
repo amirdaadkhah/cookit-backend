@@ -35,8 +35,6 @@ router.post("/", async (req, res) => {
 })
 
 async function upsertRecipe(client, recipe, recipeId) {
-  console.log('######## upsertRecipe called!');
-
   await client.query(
     `INSERT INTO recipes (
       id,title,category,vegan,vegetarian,is_warm,
@@ -79,8 +77,6 @@ async function upsertRecipe(client, recipe, recipeId) {
 }
 
 async function replaceIngredients(client, recipeId, ingredients = []) {
-  console.log('######## replaceIngredients called!');
-
   await client.query(
     `DELETE FROM recipe_ingredients WHERE recipe_id = $1`,
     [recipeId]
@@ -107,8 +103,6 @@ async function replaceIngredients(client, recipeId, ingredients = []) {
 }
 
 async function replaceSubRecipes(client, recipeId, subRecipes = []) {
-  console.log('######## replaceSubRecipes called!');
-
   await client.query(
     `DELETE FROM sub_recipes WHERE parent_recipe_id = $1`,
     [recipeId]

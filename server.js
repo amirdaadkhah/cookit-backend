@@ -6,6 +6,8 @@ const app = require('./app');
 
 const recipeRoutes = require("./routes/recipe");
 const tagsRoutes = require("./routes/tags");
+const commentRoutes = require("./routes/commentRoutes");
+
 
 if (!process.env.DATABASE_URL) {
   console.error("❌ DATABASE_URL is missing. Check your .env file.");
@@ -36,6 +38,9 @@ app.get('/ping', (req, res) => {
 app.use("/api/add/recipe", recipeRoutes);
 // CHECK RECIPE endpoint
 app.use("/api/recipe", recipeRoutes);
+
+// COMMENTS of RECIPES
+app.use("/api/recipe", commentRoutes);
 
 // GET ALL SAVED TAGS
 // public
