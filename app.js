@@ -12,8 +12,10 @@ app.use(express.json());
 app.use(
   cors({
     origin: [
-      'http://localhost:4200', 
-      'https://cookit-3f09a.web.app'
+      'http://localhost:4200',
+      'https://cookit-3f09a.web.app',
+      'https://mixiwa.com',
+      'https://www.mixiwa.com'
     ],
     methods: ['GET', 'POST', 'OPTIONS'],
     allowedHeaders: ['Content-Type']
